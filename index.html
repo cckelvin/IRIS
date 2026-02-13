@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iris AI | Singularity-Core v17.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        :root { --iris-accent: #6366f1; --bg: #050505; }
+        body { background: var(--bg); color: #e0e7ff; font-family: 'Space Grotesk', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(50px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        
+        #main-feed { flex: 1; overflow-y: auto; padding: 40px; display: flex; flex-direction: column; gap: 30px; }
+        .node { max-width: 92%; padding: 25px; border-radius: 20px; line-height: 1.7; animation: slideIn 0.4s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .ai-node { align-self: flex-start; border-left: 4px solid var(--iris-accent); background: rgba(99, 102, 241, 0.05); }
+        .user-node { align-self: flex-end; background: #fff; color: #000; font-weight: 700; }
+
+        /* RESTRUCTURED DATA TABLES */
+        .data-grid { width: 100%; margin-top: 20px; border-collapse: collapse; border-radius: 12px; overflow: hidden; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+        .data-grid th { background: var(--iris-accent); color: white; padding: 12px; text-align: left; text-transform: uppercase; font-size: 0.7rem; }
+        .data-grid td { padding: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255, 255, 255, 0.02); }
+
+        .io-anchor { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 900px; }
+        .input-wrap { display: flex; align-items: center; gap: 20px; padding: 10px 10px 10px 30px; border-radius: 100px; }
+        input { flex: 1; background: transparent; border: none; outline: none; color: #fff; font-size: 1.1rem; }
+        .btn { width: 50px; height: 50px; background: #fff; color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+        #loader { display: none; padding: 20px 40px; align-items: center; gap: 15px; }
+        .pulse { width: 10px; height: 10px; background: var(--iris-accent); border-radius: 50%; animation: pulse 1s infinite alternate; }
+        @keyframes pulse { from { opacity: 0.2; transform: scale(0.8); } to { opacity: 1; transform: scale(1.2); } }
+    </style>
+</head>
+<body>
+
+    <header class="p-6 border-bottom border-zinc-800 flex justify-between glass">
+        <h1 class="text-xs font-black tracking-[0.5em] uppercase text-indigo-400">Iris Singularity v17.0</h1>
+        <span class="text-[9px] font-mono text-zinc-500">ENGINE: DATA_EXTRACTION_MAX</span>
+    </header>
+
+    <main id="main-feed"></main>
+
+    <div id="loader">
+        <div class="pulse"></div><div class="pulse" style="animation-delay: 0.2s"></div>
+        <span class="text-[10px] font-bold text-indigo-500 tracking-widest uppercase">Extracting & Restructuring...</span>
+    </div>
+
+    <div class="io-anchor">
+        <div class="input-wrap glass">
+            <input id="user-input" type="text" placeholder="Direct the Singularity..." autocomplete="off">
+            <button id="send" class="btn">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-width="3" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = "AIzaSyCM7rgQ8J-Rw2fIyURuga-KfNDW3dZn9r4";
+        const CSE_ID  = "c7c4ecb03db19434e";
+
+        const feed = document.getElementById('main-feed');
+        const input = document.getElementById('user-input');
+        const loader = document.getElementById('loader');
+
+        function clean(text) {
+            return text.replace(/[a-zA-Z]{3} \d{1,2}, \d{4} \.\.\./g, "").replace(/\s\.\.\.\s/g, " ").trim();
+        }
+
+        async function resolveQuery() {
+            const query = input.value.trim();
+            if(!query) return;
+
+            const u = document.createElement('div'); u.className = "node user-node"; u.innerText = query;
+            feed.appendChild(u);
+            input.value = "";
+            loader.style.display = 'flex';
+            feed.scrollTop = feed.scrollHeight;
+
+            try {
+                const res = await fetch(`https://www.googleapis.com/customsearch/v1?key=${API_KEY}&cx=${CSE_ID}&q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+
+                if (data.items) {
+                    let html = "";
+                    const isList = /richest|top|fastest|best|largest|rank/i.test(query);
+
+                    if (isList) {
+                        // RESTRUCTURED TABLE LOGIC
+                        html += `<p class="mb-4">Data extraction for "${query}" complete. Synthesis follows:</p>`;
+                        html += `<table class="data-grid"><tr><th>#</th><th>Subject</th><th>Key Statistics / Data</th></tr>`;
+                        
+                        data.items.slice(0, 10).forEach((item, i) => {
+                            const name = item.title.split(/[-|:|—]/)[0].trim();
+                            const detail = clean(item.snippet).substring(0, 100);
+                            html += `<tr><td>${i+1}</td><td><strong>${name}</strong></td><td>${detail}</td></tr>`;
+                        });
+                        html += `</table>`;
+                    } else {
+                        // CONHESIVE TEXT LOGIC
+                        const text = data.items.slice(0, 3).map(item => clean(item.snippet)).join(" ");
+                        html = `<p><strong>Cognitive Synthesis:</strong> ${text}</p>`;
+                    }
+
+                    setTimeout(() => {
+                        loader.style.display = 'none';
+                        const iNode = document.createElement('div'); iNode.className = "node ai-node";
+                        iNode.innerHTML = `<span class="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-4 block">Neural Restructuring Output</span>${html}`;
+                        feed.appendChild(iNode);
+                        feed.scrollTop = feed.scrollHeight;
+                    }, 800);
+                }
+            } catch (e) { loader.style.display = 'none'; }
+        }
+
+        document.getElementById('send').onclick = resolveQuery;
+        input.onkeypress = (e) => { if(e.key === 'Enter') resolveQuery(); };
+        window.onload = () => {
+            const start = document.createElement('div'); start.className = "node ai-node";
+            start.innerHTML = `Singularity v17.0 Online. I have corrected the data extraction loops. All lists will now be restructured into coherent tables or single-text blocks.`;
+            feed.appendChild(start);
+        };
+    </script>
+</body>
+</html>
+(
