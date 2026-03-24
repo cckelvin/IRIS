@@ -1,677 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRIS AI</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
-<style>
-  :root {
-    --bg: #04050a;
-    --surface: #0b0d14;
-    --surface2: #111420;
-    --border: #1c2035;
-    --border-bright: #2a3060;
-    --accent: #4f7cff;
-    --accent-glow: rgba(79,124,255,0.18);
-    --accent-dim: #2a4cbf;
-    --green: #00e5a0;
-    --text: #e8ecf8;
-    --text-mid: #7a84a8;
-    --text-dim: #3d4468;
-    --mono: 'Space Mono', monospace;
-    --sans: 'DM Sans', sans-serif;
-  }
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html, body {
-    height: 100%;
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    font-size: 15px;
-    line-height: 1.65;
-    overflow: hidden;
-  }
-
-  /* Subtle grid overlay */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(79,124,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(79,124,255,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* Ambient glow top */
-  body::after {
-    content: '';
-    position: fixed;
-    top: -200px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 600px;
-    height: 400px;
-    background: radial-gradient(ellipse, rgba(79,124,255,0.08) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* ── Layout ── */
-  .shell {
-    position: relative;
-    z-index: 1;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    max-width: 860px;
-    margin: 0 auto;
-  }
-
-  /* ── Header ── */
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 24px;
-    border-bottom: 1px solid var(--border);
-    background: rgba(4,5,10,0.85);
-    backdrop-filter: blur(16px);
-    flex-shrink: 0;
-  }
-
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .logo-mark {
-    width: 28px;
-    height: 28px;
-    border-radius: 7px;
-    background: linear-gradient(135deg, var(--accent), var(--green));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--mono);
-    font-size: 11px;
-    font-weight: 700;
-    color: #fff;
-    letter-spacing: -1px;
-    flex-shrink: 0;
-  }
-
-  .logo-text {
-    font-family: var(--mono);
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 3px;
-    color: var(--text);
-  }
-
-  .status-pill {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 99px;
-    padding: 4px 12px;
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--text-mid);
-    letter-spacing: 1px;
-  }
-
-  .status-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--green);
-    animation: pulse 2s infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,229,160,0.4); }
-    50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(0,229,160,0); }
-  }
-
-  /* ── Scroll area ── */
-  .scroll-area {
-    flex: 1;
-    overflow-y: auto;
-    padding: 28px 24px 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 28px;
-    scroll-behavior: smooth;
-  }
-
-  .scroll-area::-webkit-scrollbar { width: 4px; }
-  .scroll-area::-webkit-scrollbar-track { background: transparent; }
-  .scroll-area::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 4px; }
-
-  /* ── Welcome splash ── */
-  .welcome {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 60px 20px 20px;
-    gap: 12px;
-  }
-
-  .welcome-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, var(--accent), var(--green));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    margin-bottom: 8px;
-    box-shadow: 0 0 40px rgba(79,124,255,0.3);
-  }
-
-  .welcome h1 {
-    font-family: var(--mono);
-    font-size: 22px;
-    letter-spacing: 2px;
-    color: var(--text);
-  }
-
-  .welcome p {
-    color: var(--text-mid);
-    font-size: 14px;
-    max-width: 340px;
-  }
-
-  .chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
-    margin-top: 8px;
-  }
-
-  .chip {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 6px 14px;
-    font-size: 12px;
-    color: var(--text-mid);
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: var(--mono);
-  }
-
-  .chip:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-    background: var(--accent-glow);
-  }
-
-  /* ── Messages ── */
-  .msg-row {
-    display: flex;
-    gap: 14px;
-    align-items: flex-start;
-    animation: fadeSlide 0.25s ease both;
-  }
-
-  @keyframes fadeSlide {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .msg-row.user { flex-direction: row-reverse; }
-
-  .avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--mono);
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 1px;
-  }
-
-  .avatar.ai {
-    background: linear-gradient(135deg, var(--accent), var(--green));
-    color: #fff;
-  }
-
-  .avatar.user {
-    background: var(--surface2);
-    border: 1px solid var(--border-bright);
-    color: var(--text-mid);
-  }
-
-  .bubble {
-    max-width: calc(100% - 56px);
-    border-radius: 12px;
-    padding: 12px 16px;
-    font-size: 14.5px;
-    line-height: 1.7;
-  }
-
-  .bubble.ai {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-top-left-radius: 3px;
-    color: var(--text);
-  }
-
-  .bubble.user {
-    background: var(--accent-dim);
-    border: 1px solid rgba(79,124,255,0.3);
-    border-top-right-radius: 3px;
-    color: #fff;
-    text-align: right;
-  }
-
-  /* Markdown inside AI bubbles */
-  .bubble.ai p { margin-bottom: 0.6em; }
-  .bubble.ai p:last-child { margin-bottom: 0; }
-
-  .bubble.ai code {
-    font-family: var(--mono);
-    font-size: 12px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    padding: 1px 5px;
-    border-radius: 4px;
-    color: var(--green);
-  }
-
-  .bubble.ai pre {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 14px;
-    overflow-x: auto;
-    margin: 8px 0;
-  }
-
-  .bubble.ai pre code {
-    background: none;
-    border: none;
-    padding: 0;
-    font-size: 12px;
-    color: var(--text);
-  }
-
-  .bubble.ai h1, .bubble.ai h2, .bubble.ai h3 {
-    font-family: var(--mono);
-    letter-spacing: 0.5px;
-    margin: 12px 0 6px;
-    color: var(--accent);
-  }
-
-  .bubble.ai h1 { font-size: 16px; }
-  .bubble.ai h2 { font-size: 14px; }
-  .bubble.ai h3 { font-size: 13px; }
-
-  .bubble.ai ul, .bubble.ai ol {
-    padding-left: 20px;
-    margin: 6px 0;
-  }
-
-  .bubble.ai li { margin: 3px 0; }
-
-  .bubble.ai blockquote {
-    border-left: 3px solid var(--accent);
-    padding: 6px 14px;
-    margin: 8px 0;
-    color: var(--text-mid);
-    background: var(--surface2);
-    border-radius: 0 6px 6px 0;
-  }
-
-  .bubble.ai a {
-    color: var(--accent);
-    text-decoration: none;
-  }
-
-  .bubble.ai a:hover { text-decoration: underline; }
-
-  /* Thinking / loading */
-  .thinking {
-    display: flex;
-    gap: 5px;
-    align-items: center;
-    padding: 6px 0;
-  }
-
-  .thinking span {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--accent);
-    animation: blink 1.2s infinite;
-  }
-
-  .thinking span:nth-child(2) { animation-delay: 0.2s; }
-  .thinking span:nth-child(3) { animation-delay: 0.4s; }
-
-  @keyframes blink {
-    0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
-    40% { opacity: 1; transform: scale(1); }
-  }
-
-  /* ── Input area ── */
-  .input-wrapper {
-    flex-shrink: 0;
-    padding: 12px 20px 20px;
-    background: rgba(4,5,10,0.92);
-    backdrop-filter: blur(16px);
-    border-top: 1px solid var(--border);
-  }
-
-  .input-box {
-    display: flex;
-    flex-direction: column;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    overflow: hidden;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-
-  .input-box:focus-within {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(79,124,255,0.12);
-  }
-
-  textarea {
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font-family: var(--sans);
-    font-size: 15px;
-    padding: 14px 16px 6px;
-    resize: none;
-    min-height: 52px;
-    max-height: 160px;
-    overflow-y: auto;
-    line-height: 1.6;
-  }
-
-  textarea::placeholder { color: var(--text-dim); }
-
-  .input-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 6px 10px 8px 16px;
-  }
-
-  .model-badge {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--text-dim);
-    letter-spacing: 1px;
-  }
-
-  .send-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 7px 16px;
-    font-family: var(--mono);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
-  }
-
-  .send-btn:hover:not(:disabled) {
-    background: #6b91ff;
-    transform: translateY(-1px);
-  }
-
-  .send-btn:active:not(:disabled) { transform: translateY(0); }
-
-  .send-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-
-  .send-btn svg { width: 12px; height: 12px; }
-
-  /* ── Error ── */
-  .error-bubble {
-    background: rgba(255,80,80,0.08);
-    border: 1px solid rgba(255,80,80,0.25);
-    border-radius: 10px;
-    padding: 10px 14px;
-    color: #ff6b6b;
-    font-size: 13px;
-    font-family: var(--mono);
-  }
-
-  /* ── Responsive ── */
-  @media (max-width: 600px) {
-    header { padding: 12px 16px; }
-    .scroll-area { padding: 20px 14px 8px; }
-    .input-wrapper { padding: 10px 10px 16px; }
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iris AI | Grok Search</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { background-color: #000; color: #e5e7eb; font-family: ui-sans-serif, system-ui; overflow: hidden; }
+        #chat-container { height: calc(100vh - 160px); overflow-y: auto; scroll-behavior: smooth; }
+        .user-bubble { background: #262626; border-radius: 1.25rem; padding: 0.75rem 1rem; align-self: flex-end; max-width: 80%; margin: 10px 0; border: 1px solid #333; }
+        .ai-response { align-self: flex-start; width: 100%; margin: 15px 0; border-left: 2px solid #3b82f6; padding-left: 1.5rem; }
+        .source-tag { font-size: 0.7rem; color: #60a5fa; background: rgba(59, 130, 246, 0.1); padding: 2px 6px; border-radius: 4px; margin-right: 5px; }
+        #chat-container::-webkit-scrollbar { display: none; }
+        .loader { width: 12px; height: 12px; border: 2px solid #3b82f6; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+    </style>
 </head>
-<body>
+<body class="flex flex-col h-screen">
 
-<div class="shell">
-  <!-- Header -->
-  <header>
-    <div class="logo">
-      <div class="logo-mark">IR</div>
-      <span class="logo-text">IRIS</span>
+    <div id="auth-screen" class="fixed inset-0 bg-black z-50 flex items-center justify-center p-4">
+        <div id="login-card" class="w-full max-w-sm bg-[#0d1117] border border-gray-800 p-8 rounded-2xl shadow-2xl">
+            <h2 class="text-2xl font-bold text-white mb-2 text-center">Iris <span class="text-blue-500">AI</span></h2>
+            <p class="text-gray-500 text-sm text-center mb-8">Login to save your search history.</p>
+            <input id="email" type="email" placeholder="Email" class="w-full bg-black border border-gray-700 p-3 rounded-lg mb-4 outline-none focus:border-blue-500 text-white">
+            <input id="password" type="password" placeholder="Password" class="w-full bg-black border border-gray-700 p-3 rounded-lg mb-6 outline-none focus:border-blue-500 text-white">
+            <button id="loginBtn" class="w-full bg-white text-black font-bold py-3 rounded-lg mb-3 hover:bg-gray-200 transition">Login</button>
+            <button id="signupBtn" class="w-full bg-transparent border border-gray-700 text-white py-3 rounded-lg hover:bg-gray-800 transition">Create Account</button>
+            <p id="auth-msg" class="text-xs mt-4 text-center text-gray-400"></p>
+        </div>
+
+        <div id="otp-card" class="w-full max-w-sm bg-[#0d1117] border border-gray-800 p-8 rounded-2xl shadow-2xl hidden">
+            <h2 class="text-2xl font-bold text-white mb-2 text-center">Verify Email</h2>
+            <p class="text-gray-500 text-sm text-center mb-8">Enter the 6-digit code sent to your email.</p>
+            <input id="otp-code" type="text" placeholder="000000" maxlength="6" class="w-full bg-black border border-gray-700 p-4 text-center text-2xl tracking-[1rem] rounded-lg mb-6 outline-none focus:border-blue-500 text-white">
+            <button id="verifyBtn" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg mb-3 hover:bg-blue-500 transition">Verify Code</button>
+            <button id="backBtn" class="w-full bg-transparent text-gray-500 text-sm hover:text-white">Back to Login</button>
+            <p id="otp-msg" class="text-xs mt-4 text-center text-red-500"></p>
+        </div>
     </div>
-    <div class="status-pill">
-      <div class="status-dot"></div>
-      ONLINE
+
+    <header class="p-4 border-b border-gray-900 flex justify-between items-center bg-black/50 backdrop-blur-md">
+        <div class="flex items-center gap-2">
+            <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+            <span class="font-bold text-lg tracking-tight">IRIS <span class="text-gray-500 font-normal text-xs ml-1">V2.4</span></span>
+        </div>
+        <button id="logoutBtn" class="text-xs text-gray-500 hover:text-white px-3 py-1 border border-gray-800 rounded-full">Logout</button>
+    </header>
+
+    <main id="chat-container" class="flex-1 p-4 md:p-8 max-w-4xl mx-auto w-full flex flex-col"></main>
+
+    <div id="status" class="hidden px-8 py-2 text-xs text-blue-400 max-w-4xl mx-auto w-full">
+        <span class="loader mr-2"></span> Searching live web results...
     </div>
-  </header>
 
-  <!-- Chat scroll area -->
-  <div class="scroll-area" id="chat">
-    <div class="welcome" id="welcome">
-      <div class="welcome-icon">◈</div>
-      <h1>IRIS AI</h1>
-      <p>Powered by Claude. Ask anything — code, analysis, creativity, or just a conversation.</p>
-      <div class="chips">
-        <div class="chip" onclick="quickSend('Explain quantum entanglement simply')">Quantum entanglement</div>
-        <div class="chip" onclick="quickSend('Write a Python web scraper')">Python scraper</div>
-        <div class="chip" onclick="quickSend('What are the best productivity habits?')">Productivity habits</div>
-        <div class="chip" onclick="quickSend('Debug this: console.log(undefined.length)')">Debug JS error</div>
-      </div>
-    </div>
-  </div>
+    <footer class="p-4 bg-black border-t border-gray-900">
+        <div class="max-w-3xl mx-auto flex bg-[#16181c] rounded-2xl border border-gray-800 px-4 py-2 focus-within:border-blue-500/50 transition-all">
+            <input id="query" type="text" placeholder="Search with Iris..." class="flex-1 bg-transparent p-2 outline-none text-white text-sm">
+            <button id="execBtn" class="text-white hover:text-blue-500 px-2 transition-colors">↑</button>
+        </div>
+    </footer>
 
-  <!-- Input -->
-  <div class="input-wrapper">
-    <div class="input-box">
-      <textarea
-        id="input"
-        placeholder="Ask anything..."
-        rows="2"
-        onkeydown="handleKey(event)"
-        oninput="autoResize(this)"
-      ></textarea>
-      <div class="input-footer">
-        <span class="model-badge">claude-sonnet-4</span>
-        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
-          <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M14 8L2 2L5 8L2 14L14 8Z" fill="currentColor"/>
-          </svg>
-          SEND
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
+    <script>
+        // Use a self-executing function to keep the scope clean and avoid "already declared" errors
+        (function() {
+            const URL = "https://wzjzjciojzmrntltkaar.supabase.co";
+            const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6anpqY2lvanptcm50bHRrYWFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMDY4MjIsImV4cCI6MjA4OTg4MjgyMn0.E3I2y88ths7AvrsvCqsAJ5gf464ij0xZ6NBSvxd4Drs";
+            const CSE_KEY = "AIzaSyCM7rgQ8J-Rw2fIyURuga-KfNDW3dZn9r4";
+            const CSE_CX = "c7c4ecb03db19434e";
 
-<script>
-  // Configure marked
-  marked.setOptions({ breaks: true, gfm: true });
+            const sb = window.supabase.createClient(URL, KEY);
+            let activeSession = null;
 
-  const chat = document.getElementById('chat');
-  const input = document.getElementById('input');
-  const sendBtn = document.getElementById('sendBtn');
-  const conversationHistory = [];
+            // UI Elements
+            const loginCard = document.getElementById('login-card');
+            const otpCard = document.getElementById('otp-card');
+            const authScreen = document.getElementById('auth-screen');
+            const chatContainer = document.getElementById("chat-container");
+            const queryInput = document.getElementById("query");
 
-  function autoResize(el) {
-    el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 160) + 'px';
-  }
+            async function checkUser() {
+                const { data: { user } } = await sb.auth.getUser();
+                if (user) {
+                    authScreen.classList.add('hidden');
+                    startSession();
+                }
+            }
 
-  function handleKey(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  }
+            async function startSession() {
+                const { data } = await sb.from('sessions').insert([{ title: "Research Session" }]).select();
+                if (data) activeSession = data[0].id;
+                render("Iris initialized. Search engine connected via Google CSE.", "ai");
+            }
 
-  function quickSend(text) {
-    input.value = text;
-    autoResize(input);
-    sendMessage();
-  }
+            function render(text, type) {
+                const div = document.createElement("div");
+                div.className = type === "user" ? "user-bubble" : "ai-response";
+                div.innerHTML = `<div class="text-sm leading-relaxed">${text}</div>`;
+                chatContainer.appendChild(div);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
 
-  function removeWelcome() {
-    const w = document.getElementById('welcome');
-    if (w) w.remove();
-  }
+            async function performSearch() {
+                const q = queryInput.value.trim();
+                if (!q) return;
+                render(q, "user");
+                queryInput.value = "";
+                document.getElementById("status").classList.remove("hidden");
 
-  function appendRow(content, role) {
-    const row = document.createElement('div');
-    row.className = `msg-row ${role}`;
+                try {
+                    const res = await fetch(`https://www.googleapis.com/customsearch/v1?key=${CSE_KEY}&cx=${CSE_CX}&q=${encodeURIComponent(q)}`);
+                    const data = await res.json();
+                    document.getElementById("status").classList.add("hidden");
 
-    const avatar = document.createElement('div');
-    avatar.className = `avatar ${role}`;
-    avatar.textContent = role === 'ai' ? 'IR' : 'YOU';
+                    if (data.items) {
+                        let html = `<p class='mb-2 opacity-50 text-[10px] uppercase font-bold'>Verified Search Results</p>`;
+                        data.items.slice(0, 3).forEach((item, i) => {
+                            html += `<div class='mb-4'><span class='source-tag'>0${i+1}</span><a href='${item.link}' target='_blank' class='text-blue-400 underline'>${item.title}</a><p class='text-gray-400 text-xs mt-1'>${item.snippet}</p></div>`;
+                        });
+                        render(html, "ai");
+                        if (activeSession) await sb.from('messages').insert([{ session_id: activeSession, user_text: q, ai_text: data.items[0].snippet }]);
+                    } else {
+                        render("No results found.", "ai");
+                    }
+                } catch (e) {
+                    document.getElementById("status").classList.add("hidden");
+                    render("Search error.", "ai");
+                }
+            }
 
-    const bubble = document.createElement('div');
-    bubble.className = `bubble ${role}`;
+            // Event Listeners (Added via JS to avoid 'defined' errors)
+            document.getElementById('loginBtn').onclick = async () => {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const { error } = await sb.auth.signInWithPassword({ email, password });
+                if (error) {
+                    if (error.message.includes("confirmed")) { loginCard.classList.add('hidden'); otpCard.classList.remove('hidden'); }
+                    else document.getElementById('auth-msg').innerText = error.message;
+                } else checkUser();
+            };
 
-    if (role === 'ai') {
-      bubble.innerHTML = marked.parse(content);
-    } else {
-      bubble.textContent = content;
-    }
+            document.getElementById('signupBtn').onclick = async () => {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const { error } = await sb.auth.signUp({ email, password });
+                if (error) document.getElementById('auth-msg').innerText = error.message;
+                else { loginCard.classList.add('hidden'); otpCard.classList.remove('hidden'); }
+            };
 
-    row.appendChild(avatar);
-    row.appendChild(bubble);
-    chat.appendChild(row);
-    chat.scrollTop = chat.scrollHeight;
-    return bubble;
-  }
+            document.getElementById('verifyBtn').onclick = async () => {
+                const email = document.getElementById('email').value;
+                const token = document.getElementById('otp-code').value;
+                const { error } = await sb.auth.verifyOtp({ email, token, type: 'signup' });
+                if (error) document.getElementById('otp-msg').innerText = error.message;
+                else checkUser();
+            };
 
-  function appendThinking() {
-    const row = document.createElement('div');
-    row.className = 'msg-row ai';
-    row.id = 'thinking-row';
+            document.getElementById('logoutBtn').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+            document.getElementById('execBtn').onclick = performSearch;
+            queryInput.onkeypress = (e) => { if(e.key === 'Enter') performSearch(); };
+            document.getElementById('backBtn').onclick = () => { otpCard.classList.add('hidden'); loginCard.classList.remove('hidden'); };
 
-    const avatar = document.createElement('div');
-    avatar.className = 'avatar ai';
-    avatar.textContent = 'IR';
-
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble ai';
-    bubble.innerHTML = `<div class="thinking"><span></span><span></span><span></span></div>`;
-
-    row.appendChild(avatar);
-    row.appendChild(bubble);
-    chat.appendChild(row);
-    chat.scrollTop = chat.scrollHeight;
-  }
-
-  function removeThinking() {
-    const el = document.getElementById('thinking-row');
-    if (el) el.remove();
-  }
-
-  function appendError(msg) {
-    const row = document.createElement('div');
-    row.className = 'msg-row ai';
-    const avatar = document.createElement('div');
-    avatar.className = 'avatar ai';
-    avatar.textContent = 'IR';
-    const bubble = document.createElement('div');
-    bubble.className = 'error-bubble';
-    bubble.textContent = '⚠ ' + msg;
-    row.appendChild(avatar);
-    row.appendChild(bubble);
-    chat.appendChild(row);
-    chat.scrollTop = chat.scrollHeight;
-  }
-
-  async function sendMessage() {
-    const text = input.value.trim();
-    if (!text || sendBtn.disabled) return;
-
-    removeWelcome();
-    appendRow(text, 'user');
-    conversationHistory.push({ role: 'user', content: text });
-
-    input.value = '';
-    input.style.height = 'auto';
-    sendBtn.disabled = true;
-    appendThinking();
-
-    try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          system: 'You are IRIS, a sharp and helpful AI assistant. Be concise but thorough. Use markdown for code blocks, lists, and headers where appropriate.',
-          messages: conversationHistory
-        })
-      });
-
-      const data = await response.json();
-      removeThinking();
-
-      if (data.content && data.content[0]) {
-        const reply = data.content.map(b => b.text || '').join('');
-        conversationHistory.push({ role: 'assistant', content: reply });
-        appendRow(reply, 'ai');
-      } else if (data.error) {
-        appendError(data.error.message || 'API error');
-      } else {
-        appendError('Unexpected response from API.');
-      }
-    } catch (err) {
-      removeThinking();
-      appendError('Network error: ' + err.message);
-    }
-
-    sendBtn.disabled = false;
-    input.focus();
-  }
-</script>
+            window.onload = checkUser;
+        })();
+    </script>
 </body>
-    </html>
-    
+              </html>
+              I'm
