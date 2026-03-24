@@ -3,68 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iris AI | Grok Search</title>
+    <title>Iris | Intelligent Search</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #000; color: #e5e7eb; font-family: ui-sans-serif, system-ui; overflow: hidden; }
-        #chat-container { height: calc(100vh - 160px); overflow-y: auto; scroll-behavior: smooth; }
-        .user-bubble { background: #262626; border-radius: 1.25rem; padding: 0.75rem 1rem; align-self: flex-end; max-width: 80%; margin: 10px 0; border: 1px solid #333; }
-        .ai-response { align-self: flex-start; width: 100%; margin: 15px 0; border-left: 2px solid #3b82f6; padding-left: 1.5rem; }
-        .source-tag { font-size: 0.7rem; color: #60a5fa; background: rgba(59, 130, 246, 0.1); padding: 2px 6px; border-radius: 4px; margin-right: 5px; }
+        :root { --grok-blue: #1d9bf0; --iris-bg: #000000; }
+        body { background-color: var(--iris-bg); color: #ffffff; font-family: 'Space Grotesk', sans-serif; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
         #chat-container::-webkit-scrollbar { display: none; }
-        .loader { width: 12px; height: 12px; border: 2px solid #3b82f6; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
-        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .grok-input-pill { background: rgba(22, 24, 28, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); }
+        .ai-message { border-left: 2px solid var(--grok-blue); background: linear-gradient(90deg, rgba(29, 155, 240, 0.05) 0%, transparent 100%); margin-bottom: 2rem; }
         .hidden { display: none !important; }
+        .logo-glow { filter: drop-shadow(0 0 8px var(--grok-blue)); }
     </style>
 </head>
-<body class="flex flex-col h-screen">
+<body>
 
     <div id="auth-screen" class="fixed inset-0 bg-black z-50 flex items-center justify-center p-4">
-        <div id="login-card" class="w-full max-w-sm bg-[#0d1117] border border-gray-800 p-8 rounded-2xl shadow-2xl">
-            <h2 class="text-2xl font-bold text-white mb-2 text-center">Iris <span class="text-blue-500">AI</span></h2>
-            <p class="text-gray-500 text-sm text-center mb-8">Login to save your search history.</p>
-            <input id="email" type="email" placeholder="Email" class="w-full bg-black border border-gray-700 p-3 rounded-lg mb-4 outline-none focus:border-blue-500 text-white">
-            <input id="password" type="password" placeholder="Password" class="w-full bg-black border border-gray-700 p-3 rounded-lg mb-6 outline-none focus:border-blue-500 text-white">
-            <button id="loginBtn" class="w-full bg-white text-black font-bold py-3 rounded-lg mb-3 hover:bg-gray-200 transition">Login</button>
-            <button id="signupBtn" class="w-full bg-transparent border border-gray-700 text-white py-3 rounded-lg hover:bg-gray-800 transition">Create Account</button>
-            <p id="auth-msg" class="text-xs mt-4 text-center text-gray-400"></p>
+        <div id="login-card" class="w-full max-w-sm bg-[#0d1117] border border-gray-800 p-8 rounded-3xl shadow-2xl">
+            <div class="flex justify-center mb-6">
+                <svg class="logo-glow" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#1d9bf0" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-6 text-center tracking-tight">Iris <span class="text-blue-500">AI</span></h2>
+            <input id="email" type="email" placeholder="Email" class="w-full bg-black border border-gray-800 p-4 rounded-xl mb-4 outline-none focus:border-blue-500 text-white">
+            <input id="password" type="password" placeholder="Password" class="w-full bg-black border border-gray-800 p-4 rounded-xl mb-6 outline-none focus:border-blue-500 text-white">
+            <button id="loginBtn" class="w-full bg-white text-black font-bold py-4 rounded-xl mb-3 hover:opacity-90">Login</button>
+            <button id="signupBtn" class="w-full bg-transparent border border-gray-800 text-gray-400 py-4 rounded-xl hover:text-white">Create Account</button>
+            <p id="auth-msg" class="text-xs mt-4 text-center text-red-400"></p>
         </div>
 
-        <div id="otp-card" class="w-full max-w-sm bg-[#0d1117] border border-gray-800 p-8 rounded-2xl shadow-2xl hidden">
-            <h2 class="text-2xl font-bold text-white mb-2 text-center">Verify Email</h2>
-            <p class="text-gray-500 text-sm text-center mb-8">Enter the 6-digit code sent to your email.</p>
-            <input id="otp-code" type="text" placeholder="000000" maxlength="6" class="w-full bg-black border border-gray-700 p-4 text-center text-2xl tracking-[1rem] rounded-lg mb-6 outline-none focus:border-blue-500 text-white">
-            <button id="verifyBtn" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg mb-3 hover:bg-blue-500 transition">Verify Code</button>
-            <button id="backBtn" class="w-full bg-transparent text-gray-500 text-sm hover:text-white">Back to Login</button>
-            <p id="otp-msg" class="text-xs mt-4 text-center text-red-500"></p>
+        <div id="otp-card" class="w-full max-w-sm bg-[#0d1117] border border-gray-800 p-8 rounded-3xl hidden">
+            <h2 class="text-xl font-bold text-white mb-2 text-center">Verify Email</h2>
+            <p class="text-gray-500 text-xs text-center mb-8">Enter the 6-digit code sent to your email.</p>
+            <input id="otp-code" type="text" placeholder="000000" maxlength="6" class="w-full bg-black border border-gray-800 p-4 text-center text-2xl tracking-widest rounded-xl mb-6 outline-none focus:border-blue-500 text-white">
+            <button id="verifyBtn" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl">Verify & Sign In</button>
         </div>
     </div>
 
-    <header class="p-4 border-b border-gray-900 flex justify-between items-center bg-black/50 backdrop-blur-md">
-        <div class="flex items-center gap-2">
-            <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-            <span class="font-bold text-lg tracking-tight">IRIS <span class="text-gray-500 font-normal text-xs ml-1">V2.4</span></span>
+    <header class="p-5 flex justify-between items-center border-b border-white/5 bg-black">
+        <div class="flex items-center gap-3">
+            <div class="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_10px_#1d9bf0]"></div>
+            <span class="font-bold tracking-widest text-xs uppercase">IRIS <span class="text-white/20 font-light italic">INTELLIGENCE</span></span>
         </div>
-        <button id="logoutBtn" class="text-xs text-gray-500 hover:text-white px-3 py-1 border border-gray-800 rounded-full">Logout</button>
+        <button id="logoutBtn" class="text-[10px] uppercase tracking-tighter border border-white/10 px-4 py-1.5 rounded-full hover:bg-white hover:text-black transition-all">Sign Out</button>
     </header>
 
-    <main id="chat-container" class="flex-1 p-4 md:p-8 max-w-4xl mx-auto w-full flex flex-col"></main>
+    <main id="chat-container" class="flex-1 overflow-y-auto p-6 md:p-12 space-y-8 max-w-4xl mx-auto w-full"></main>
 
-    <div id="status" class="hidden px-8 py-2 text-xs text-blue-400 max-w-4xl mx-auto w-full">
-        <span class="loader mr-2"></span> Searching live web results...
-    </div>
-
-    <footer class="p-4 bg-black border-t border-gray-900">
-        <div class="max-w-3xl mx-auto flex bg-[#16181c] rounded-2xl border border-gray-800 px-4 py-2 focus-within:border-blue-500/50 transition-all">
-            <input id="query" type="text" placeholder="Search with Iris..." class="flex-1 bg-transparent p-2 outline-none text-white text-sm">
-            <button id="execBtn" class="text-white hover:text-blue-500 px-2 transition-colors">↑</button>
+    <footer class="p-6 md:pb-10 bg-black">
+        <div class="max-w-3xl mx-auto relative">
+            <div class="grok-input-pill flex items-center p-2 rounded-[24px] focus-within:border-blue-500/50 transition-all border border-transparent">
+                <input id="query" type="text" placeholder="Ask Iris anything..." class="flex-1 bg-transparent px-4 py-3 outline-none text-white text-md">
+                <button id="execBtn" class="bg-blue-600 text-white p-3 rounded-full hover:scale-105 active:scale-95 transition-all">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
+                </button>
+            </div>
         </div>
     </footer>
 
     <script>
-        // Use a self-executing function to keep the scope clean and avoid "already declared" errors
         (function() {
+            // Configuration
             const URL = "https://wzjzjciojzmrntltkaar.supabase.co";
             const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6anpqY2lvanptcm50bHRrYWFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMDY4MjIsImV4cCI6MjA4OTg4MjgyMn0.E3I2y88ths7AvrsvCqsAJ5gf464ij0xZ6NBSvxd4Drs";
             const CSE_KEY = "AIzaSyCM7rgQ8J-Rw2fIyURuga-KfNDW3dZn9r4";
@@ -73,12 +72,13 @@
             const sb = window.supabase.createClient(URL, KEY);
             let activeSession = null;
 
-            // UI Elements
+            // UI Selectors
+            const authScreen = document.getElementById('auth-screen');
             const loginCard = document.getElementById('login-card');
             const otpCard = document.getElementById('otp-card');
-            const authScreen = document.getElementById('auth-screen');
-            const chatContainer = document.getElementById("chat-container");
-            const queryInput = document.getElementById("query");
+            const chatBox = document.getElementById("chat-container");
+            const qInput = document.getElementById("query");
+            const msgLabel = document.getElementById('auth-msg');
 
             async function checkUser() {
                 const { data: { user } } = await sb.auth.getUser();
@@ -89,82 +89,91 @@
             }
 
             async function startSession() {
-                const { data } = await sb.from('sessions').insert([{ title: "Research Session" }]).select();
+                const { data } = await sb.from('sessions').insert([{ title: "Intelligent Session" }]).select();
                 if (data) activeSession = data[0].id;
-                render("Iris initialized. Search engine connected via Google CSE.", "ai");
+                render("I am <span class='text-blue-400 font-bold'>Iris</span>. My intelligence is at your disposal. What knowledge shall I synthesize for you today?", "ai");
             }
 
             function render(text, type) {
                 const div = document.createElement("div");
-                div.className = type === "user" ? "user-bubble" : "ai-response";
-                div.innerHTML = `<div class="text-sm leading-relaxed">${text}</div>`;
-                chatContainer.appendChild(div);
-                chatContainer.scrollTop = chatContainer.scrollHeight;
+                div.className = type === "user" ? "flex justify-end mb-6" : "ai-message p-6 rounded-2xl";
+                div.innerHTML = type === "user" ? 
+                    `<div class="bg-[#1d9bf0] text-white px-5 py-2.5 rounded-2xl max-w-[80%] text-sm">${text}</div>` : 
+                    `<div class="text-md leading-relaxed text-white/90">${text}</div>`;
+                chatBox.appendChild(div);
+                chatBox.scrollTop = chatBox.scrollHeight;
             }
 
             async function performSearch() {
-                const q = queryInput.value.trim();
+                const q = qInput.value.trim();
                 if (!q) return;
                 render(q, "user");
-                queryInput.value = "";
-                document.getElementById("status").classList.remove("hidden");
+                qInput.value = "";
 
                 try {
                     const res = await fetch(`https://www.googleapis.com/customsearch/v1?key=${CSE_KEY}&cx=${CSE_CX}&q=${encodeURIComponent(q)}`);
                     const data = await res.json();
-                    document.getElementById("status").classList.add("hidden");
 
                     if (data.items) {
-                        let html = `<p class='mb-2 opacity-50 text-[10px] uppercase font-bold'>Verified Search Results</p>`;
-                        data.items.slice(0, 3).forEach((item, i) => {
-                            html += `<div class='mb-4'><span class='source-tag'>0${i+1}</span><a href='${item.link}' target='_blank' class='text-blue-400 underline'>${item.title}</a><p class='text-gray-400 text-xs mt-1'>${item.snippet}</p></div>`;
-                        });
-                        render(html, "ai");
-                        if (activeSession) await sb.from('messages').insert([{ session_id: activeSession, user_text: q, ai_text: data.items[0].snippet }]);
+                        const summary = data.items.slice(0, 3).map(i => i.snippet).join(" ");
+                        const response = `I have scanned the global data streams for you. <br><br> ${summary} <br><br> <span class="text-[10px] text-blue-500/50 uppercase tracking-widest font-bold">Synthesized Intelligence</span>`;
+                        render(response, "ai");
+                        if (activeSession) await sb.from('messages').insert([{ session_id: activeSession, user_text: q, ai_text: summary }]);
                     } else {
-                        render("No results found.", "ai");
+                        render("The information landscape is currently void of that data.", "ai");
                     }
-                } catch (e) {
-                    document.getElementById("status").classList.add("hidden");
-                    render("Search error.", "ai");
-                }
+                } catch (e) { render("A temporary disturbance in the neural link has occurred.", "ai"); }
             }
 
-            // Event Listeners (Added via JS to avoid 'defined' errors)
+            // Fixed Button Click Handlers
             document.getElementById('loginBtn').onclick = async () => {
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                const { error } = await sb.auth.signInWithPassword({ email, password });
+                msgLabel.innerText = "Processing...";
+                const { error } = await sb.auth.signInWithPassword({ 
+                    email: document.getElementById('email').value, 
+                    password: document.getElementById('password').value 
+                });
                 if (error) {
-                    if (error.message.includes("confirmed")) { loginCard.classList.add('hidden'); otpCard.classList.remove('hidden'); }
-                    else document.getElementById('auth-msg').innerText = error.message;
-                } else checkUser();
+                    if (error.message.includes("confirmed")) {
+                        loginCard.classList.add('hidden');
+                        otpCard.classList.remove('hidden');
+                    } else {
+                        msgLabel.innerText = error.message;
+                    }
+                } else {
+                    checkUser();
+                }
             };
 
             document.getElementById('signupBtn').onclick = async () => {
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                const { error } = await sb.auth.signUp({ email, password });
-                if (error) document.getElementById('auth-msg').innerText = error.message;
-                else { loginCard.classList.add('hidden'); otpCard.classList.remove('hidden'); }
+                msgLabel.innerText = "Creating account...";
+                const { error } = await sb.auth.signUp({ 
+                    email: document.getElementById('email').value, 
+                    password: document.getElementById('password').value 
+                });
+                if (error) {
+                    msgLabel.innerText = error.message;
+                } else {
+                    loginCard.classList.add('hidden');
+                    otpCard.classList.remove('hidden');
+                }
             };
 
             document.getElementById('verifyBtn').onclick = async () => {
-                const email = document.getElementById('email').value;
-                const token = document.getElementById('otp-code').value;
-                const { error } = await sb.auth.verifyOtp({ email, token, type: 'signup' });
-                if (error) document.getElementById('otp-msg').innerText = error.message;
+                const { error } = await sb.auth.verifyOtp({ 
+                    email: document.getElementById('email').value, 
+                    token: document.getElementById('otp-code').value, 
+                    type: 'signup' 
+                });
+                if (error) alert(error.message);
                 else checkUser();
             };
 
             document.getElementById('logoutBtn').onclick = async () => { await sb.auth.signOut(); location.reload(); };
             document.getElementById('execBtn').onclick = performSearch;
-            queryInput.onkeypress = (e) => { if(e.key === 'Enter') performSearch(); };
-            document.getElementById('backBtn').onclick = () => { otpCard.classList.add('hidden'); loginCard.classList.remove('hidden'); };
+            qInput.onkeypress = (e) => { if(e.key === 'Enter') performSearch(); };
 
             window.onload = checkUser;
         })();
     </script>
 </body>
-              </html>
-              I'm
+</html>
